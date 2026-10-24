@@ -1,8 +1,18 @@
 FROM nginx:alpine
-ARG FLAG=not-set-at-build
-# Build-time flag injection: baked into the image
-RUN echo "$FLAG" > /usr/share/nginx/html/build-flag.txt
-COPY index.html /usr/share/nginx/html/index.html
-COPY start.sh /docker-entrypoint.d/40-runtime-flag.sh
-RUN chmod +x /docker-entrypoint.d/40-runtime-flag.sh
-EXPOSE 80
+
+ARG FLAG=CTF{placeholder_flag}
+ENV FLAG=${FLAG}
+
+WORKDIR /app
+
+# Write flag at build time (when BUILD_TIME flag injection is enabled)
+RUN echo "$FLAG" > /app/flag.txt && \
+    cp /app/flag.txt /flag.txt && \
+    chmod 644 /app/flag.txt /flag.txt
+
+COPY entrypoint.sh /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
+
+EXPOSE 1337 80
+
+ENTRYPOINT ["/entrypoint.sh"]
